@@ -10,6 +10,10 @@ relevant passages, and asks a chat model to answer from those passages only.
 question ──> chunk retrieval (vector + keywords + MMR) ──> LLM synthesis ──> answer with （资料N） citations
 ```
 
+Ask in natural language; get a synthesised answer instead of a link list.
+
+![The knowledge-base panel answering a question, with 11 cited sources](docs/screenshot.jpg)
+
 ## What you get
 
 - **A chat panel, not a search box.** Ask in natural language; get a synthesised answer instead of a link list.
@@ -101,6 +105,19 @@ The local service is plain HTTP, so other tools can use it:
 - No knowledge graph, no reranker, no multi-library separation — this is deliberately a single local library.
 - PDF extraction depends on `pypdf`; scanned PDFs without a text layer are skipped.
 - Answer latency is dominated by the model: `deepseek-reasoner` typically takes 15–40 s per question.
+
+## Notes for plugin developers
+
+Three things cost real debugging time here; they are easy to repeat:
+
+- **The client module `id` must equal the package name.** Renaming the package without renaming
+  `window.__ModuleLoader__.load({ id: … })` loads the bundle but silently fails to mount it — no error, the sidebar
+  entry just never appears.
+- **Every tool needs `output: { schema, render }`.** Registration throws
+  `tool "x" must declare output { schema, render, presentationMeta? }` otherwise, and the schema DSL rejects
+  `required: true` on a string property — put `required` on the object, or omit it.
+- **A `link:` dependency is materialised, not symlinked,** under pnpm's hoisted node-linker: editing the source
+  directory does not change what the running Host loads until you reinstall the bundle.
 
 ## License
 
