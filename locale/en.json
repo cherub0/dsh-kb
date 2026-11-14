@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Knowledge base",
+    "description": "Chat with your own documents: local chunk retrieval, RAG answers with citations, document import and agent tools.",
+    "detail": "docs/DETAIL.md"
+  }
+}

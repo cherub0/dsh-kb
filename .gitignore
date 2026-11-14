@@ -1,0 +1,14 @@
+node_modules/
+__pycache__/
+*.pyc
+notes/
+index.db
+chunk_emb.npy
+chunk_meta.json
+chunk_embed_cache.npz
+embeddings.npy
+embed_meta.json
+inbox/
+*.log
+.DS_Store
+Thumbs.db

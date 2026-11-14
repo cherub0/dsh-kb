@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "知识库",
+    "description": "把本地文档变成能对话的知识库：中文向量检索 + MMR 去重，回答带引用，支持 PDF/Word 导入与 Agent 工具。",
+    "detail": "docs/DETAIL.md"
+  }
+}

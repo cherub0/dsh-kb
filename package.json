@@ -1,0 +1,27 @@
+{
+  "name": "dsh-kb",
+  "version": "1.0.0",
+  "description": "Local knowledge base for DeepSeek Harness: chat panel, chunk retrieval, RAG answers with citations, document import and agent tools.",
+  "type": "module",
+  "exports": {
+    ".": { "default": "./lib/index.js" },
+    "./client": { "default": "./lib/client.js" },
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": ["lib", "python", "cordis.patch.yml", "locale/*.json", "docs", "icon.svg", "README.md", "LICENSE"],
+  "keywords": ["deepseek-harness", "dsh", "dsh-plugin", "knowledge-base", "rag", "retrieval", "embeddings"],
+  "repository": { "type": "git", "url": "git+https://github.com/cherub0/dsh-kb.git" },
+  "homepage": "https://github.com/cherub0/dsh-kb#readme",
+  "bugs": { "url": "https://github.com/cherub0/dsh-kb/issues" },
+  "author": "cherub0",
+  "license": "MIT",
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": ["@deepseek-ai/dsh-client-ui-sidebar-right"]
+    }
+  }
+}

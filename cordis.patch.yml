@@ -1,0 +1,4 @@
+- insert:
+    - id: dsh-kb
+      name: 'dsh-kb'
+      config: {}
