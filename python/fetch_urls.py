@@ -2,7 +2,7 @@
 import hashlib, html, os, re, sys, time
 import requests
 
-KB = os.environ.get('DSH_KB_DIR') or os.path.dirname(os.path.abspath(__file__))
+KB = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(KB, 'notes', 'import')
 
 UA = [
@@ -10,6 +10,54 @@ UA = [
     'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MicroMessenger/8.0.49(0x18003133) NetType/WIFI Language/zh_CN',
 ]
 BLOCK = re.compile(r'</(p|div|section|br|li|h[1-6]|tr|pre|blockquote)>', re.I)
+PAGE_URL = ''
+
+
+def to_markdown(fragment, url):
+    """HTML -> clean Markdown via trafilatura; returns '' when it gives up."""
+    try:
+        import trafilatura
+    except ImportError:
+        return ''
+    try:
+        md = trafilatura.extract(
+            '<html><body>' + fragment + '</body></html>',
+            url=url,
+            output_format='markdown',
+            include_links=True,
+            include_formatting=True,
+            include_tables=True,
+            favor_recall=True,
+        )
+        return (md or '').strip()
+    except Exception as exc:
+        print(f'  trafilatura 失败，回退纯文本: {exc}')
+        return ''
+
+
+def generic_extract(page, url):
+    """Any ordinary web page -> (title, markdown, date) through trafilatura."""
+    try:
+        import trafilatura
+    except ImportError:
+        return '', '', time.strftime('%Y-%m-%d')
+    md = trafilatura.extract(
+        page, url=url, output_format='markdown',
+        include_links=True, include_formatting=True, include_tables=True,
+    )
+    if not md:
+        return '', '', time.strftime('%Y-%m-%d')
+    title = ''
+    date = time.strftime('%Y-%m-%d')
+    try:
+        meta = trafilatura.extract_metadata(page, default_url=url)
+        if meta is not None:
+            title = (meta.title or '').strip()
+            if meta.date:
+                date = str(meta.date)[:10]
+    except Exception:
+        pass
+    return title, md.strip(), date
 
 
 def extract(page):
@@ -17,14 +65,19 @@ def extract(page):
     if not m:
         m = re.search(r'<div[^>]+id="js_content"[^>]*>(.*)</div>', page, re.S)
     if not m:
-        return '', ''
+        # not a WeChat article (or a JS-rendered shell): let trafilatura try the whole page
+        title, md, date = generic_extract(page, PAGE_URL)
+        return title, md, date
     raw = m.group(1)
     raw = re.sub(r'<(script|style)[^>]*>.*?</\1>', ' ', raw, flags=re.S | re.I)
+    md = to_markdown(raw, PAGE_URL)
     raw = BLOCK.sub('\n', raw)
     text = html.unescape(re.sub(r'<[^>]+>', '', raw))
     lines = [re.sub(r'[ \t\u00a0]+', ' ', ln).strip() for ln in text.split('\n')]
     body = '\n\n'.join([ln for ln in lines if ln])
     body = re.sub(r'\n{3,}', '\n\n', body).strip()
+    if len(md) > 40:
+        body = md
 
     t = re.search(r'<h1[^>]*class="rich_media_title"[^>]*>(.*?)</h1>', page, re.S)
     title = html.unescape(re.sub(r'<[^>]+>', '', t.group(1))).strip() if t else ''
@@ -65,9 +118,11 @@ def fetch(url):
 
 
 def main(urls):
+    global PAGE_URL
     os.makedirs(OUT, exist_ok=True)
     ok = 0
     for url in urls:
+        PAGE_URL = url
         page = fetch(url)
         if not page:
             print(f'失败（拿不到页面）: {url}')
